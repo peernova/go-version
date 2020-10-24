@@ -18,14 +18,16 @@ var (
 // The raw regular expression string used for testing the validity
 // of a version.
 const (
-	VersionRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
-		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-?([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
+	VersionRegexpRaw string = `v?([0-9]+(\.[0-9]+)*)` +
+		`((?:\.(v[0-9]+|RELEASE|Final))|-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-?([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
+//		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-?([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
 		`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
 		`?`
 
 	// SemverRegexpRaw requires a separator between version and prerelease
-	SemverRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
-		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
+	SemverRegexpRaw string = `v?([0-9]+(\.[0-9]+)*)` +
+		`((?:\.(v[0-9]+|RELEASE|Final))|-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
+//		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
 		`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
 		`?`
 )
@@ -33,6 +35,7 @@ const (
 // Version represents a single version.
 type Version struct {
 	metadata string
+	release  string
 	pre      string
 	segments []int64
 	si       int
@@ -67,7 +70,7 @@ func newVersion(v string, pattern *regexp.Regexp) (*Version, error) {
 	si := 0
 	for i, str := range segmentsStr {
 		val, err := strconv.ParseInt(str, 10, 64)
-		if err != nil {
+		if err != nil && i != len(segmentsStr)-1 {
 			return nil, fmt.Errorf(
 				"Error parsing version: %s", err)
 		}
@@ -83,13 +86,15 @@ func newVersion(v string, pattern *regexp.Regexp) (*Version, error) {
 		segments = append(segments, 0)
 	}
 
-	pre := matches[7]
+	release := matches[4]
+	pre := matches[8]
 	if pre == "" {
-		pre = matches[4]
+		pre = matches[5]
 	}
 
 	return &Version{
-		metadata: matches[10],
+		metadata: matches[11],
+		release:  release,
 		pre:      pre,
 		segments: segments,
 		si:       si,
@@ -367,6 +372,9 @@ func (v *Version) String() string {
 		fmtParts[i] = str
 	}
 	fmt.Fprintf(&buf, strings.Join(fmtParts, "."))
+	if v.release != "" {
+		fmt.Fprintf(&buf, ".%s", v.release)
+	}
 	if v.pre != "" {
 		fmt.Fprintf(&buf, "-%s", v.pre)
 	}

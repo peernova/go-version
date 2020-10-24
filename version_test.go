@@ -34,6 +34,8 @@ func TestNewVersion(t *testing.T) {
 		{"1.7rc2", false},
 		{"v1.7rc2", false},
 		{"1.0-", false},
+		{"2.3-SNAPSHOT", false},
+		{"2.3.4.Final", false},
 	}
 
 	for _, tc := range cases {
@@ -75,6 +77,8 @@ func TestNewSemver(t *testing.T) {
 		{"1.7rc2", true},
 		{"v1.7rc2", true},
 		{"1.0-", true},
+		{"2.3-SNAPSHOT", false},
+		{"2.3.4.Final", false},
 	}
 
 	for _, tc := range cases {
@@ -110,6 +114,9 @@ func TestVersionCompare(t *testing.T) {
 		{"1.7rc2", "1.7rc1", 1},
 		{"1.7rc2", "1.7", -1},
 		{"1.2.0", "1.2.0-X-1.2.0+metadata~dist", 1},
+		{"2.3-SNAPSHOT", "2.3", -1},
+		{"2.3.4.Final", "2.3.4", 0},
+		{"2.3.4.v1234", "2.3.4", 0},
 	}
 
 	for _, tc := range cases {
@@ -255,6 +262,8 @@ func TestVersionMetadata(t *testing.T) {
 		{"1.2.0-x.Y.0", ""},
 		{"1.2.0-x.Y.0+metadata", "metadata"},
 		{"1.2.0-metadata-1.2.0+metadata~dist", "metadata~dist"},
+		{"1.2.0.Final", ""},
+		{"1.2.0-SNAPSHOT", ""},
 	}
 
 	for _, tc := range cases {
@@ -283,6 +292,8 @@ func TestVersionPrerelease(t *testing.T) {
 		{"1.2.0-x.Y.0+metadata", "x.Y.0"},
 		{"1.2.0-metadata-1.2.0+metadata~dist", "metadata-1.2.0"},
 		{"17.03.0-ce", "ce"}, // zero-padded fields
+		{"17.03.0-SNAPSHOT", "SNAPSHOT"}, // zero-padded fields
+		{"17.03.0.Final", ""}, // zero-padded fields
 	}
 
 	for _, tc := range cases {
@@ -310,6 +321,8 @@ func TestVersionSegments(t *testing.T) {
 		{"1.2.0-x.Y.0+metadata", []int{1, 2, 0}},
 		{"1.2.0-metadata-1.2.0+metadata~dist", []int{1, 2, 0}},
 		{"17.03.0-ce", []int{17, 3, 0}}, // zero-padded fields
+		{"17.03.0-SNAPSHOT", []int{17, 3, 0}}, // zero-padded fields
+		{"17.03.0.Final", []int{17, 3, 0}}, // zero-padded fields
 	}
 
 	for _, tc := range cases {
@@ -369,6 +382,9 @@ func TestVersionString(t *testing.T) {
 		{"1.2.0-x.Y.0+metadata", "1.2.0-x.Y.0+metadata"},
 		{"1.2.0-metadata-1.2.0+metadata~dist", "1.2.0-metadata-1.2.0+metadata~dist"},
 		{"17.03.0-ce", "17.3.0-ce"}, // zero-padded fields
+		{"17.3.0-SNAPSHOT", "17.3.0-SNAPSHOT"}, // zero-padded fields
+		{"17.3.0.Final", "17.3.0.Final"}, // zero-padded fields
+		{"17.3.0.v234", "17.3.0.v234"}, // zero-padded fields
 	}
 
 	for _, tc := range cases {
@@ -411,6 +427,8 @@ func TestEqual(t *testing.T) {
 		{"1.7rc2", "1.7rc1", false},
 		{"1.7rc2", "1.7", false},
 		{"1.2.0", "1.2.0-X-1.2.0+metadata~dist", false},
+		{"1.2.0-SNAPSHOT", "1.2.0", false},
+		{"1.2.0.Final", "1.2.0", true},
 	}
 
 	for _, tc := range cases {
@@ -458,6 +476,8 @@ func TestGreaterThan(t *testing.T) {
 		{"1.7rc2", "1.7rc1", true},
 		{"1.7rc2", "1.7", false},
 		{"1.2.0", "1.2.0-X-1.2.0+metadata~dist", true},
+		{"1.2.0", "1.2.0-SNAPSHOT", true},
+		{"1.2.0.Final", "1.2.0-SNAPSHOT", true},
 	}
 
 	for _, tc := range cases {
